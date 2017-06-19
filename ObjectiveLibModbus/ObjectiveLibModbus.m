@@ -317,6 +317,43 @@
     });
 }
 
+- (void) writeRegistersFromAndOn:(int)address toValues:(NSArray*)numberArray andReadRegistersFrom:(int)readAddress count:(int)count success:(void (^)(NSArray *array))success failure:(void (^)(NSError *error))failure {
+    dispatch_async(modbusQueue, ^{
+        
+        uint16_t valueArray[numberArray.count];
+        
+        for (int i = 0; i < numberArray.count; i++) {
+            valueArray[i] = [[numberArray objectAtIndex:i] intValue];
+        }
+        
+        uint16_t tab_reg[count*sizeof(uint16_t)];
+        
+        if (modbus_write_and_read_registers(mb,
+                                            address, numberArray.count, valueArray,
+                                            readAddress, count, tab_reg)) {
+            NSMutableArray *returnArray = [NSMutableArray arrayWithCapacity:count];
+            
+            for(int i=0;i<count;i++)
+            {
+                [returnArray addObject:[NSNumber numberWithInt: tab_reg[i]]];
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                success(returnArray);
+            });
+        }
+        else {
+            NSString *errorString = [NSString stringWithUTF8String:modbus_strerror(errno)];
+            NSMutableDictionary* details = [NSMutableDictionary dictionary];
+            [details setValue:errorString forKey:NSLocalizedDescriptionKey];
+            // populate the error object with the details
+            NSError *error = [NSError errorWithDomain:@"Modbus" code:errno userInfo:details];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                failure(error);
+            });
+        }
+    });
+}
+
 - (void) dealloc {
     dispatch_release(modbusQueue);
     modbus_free(mb);
