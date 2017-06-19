@@ -172,6 +172,27 @@
     
 }
 
+- (void) maskWriteRegister:(int)address andMask:(uint16_t)andMask orMask:(uint16_t)orMask success:(void (^)())success failure:(void (^)(NSError *error))failure {
+    dispatch_async(modbusQueue, ^{
+        
+        if(modbus_mask_write_register(mb, address, andMask, orMask) >= 0) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                success();
+            });
+        }
+        else {
+            NSString *errorString = [NSString stringWithUTF8String:modbus_strerror(errno)];
+            NSMutableDictionary* details = [NSMutableDictionary dictionary];
+            [details setValue:errorString forKey:NSLocalizedDescriptionKey];
+            // populate the error object with the details
+            NSError *error = [NSError errorWithDomain:@"Modbus" code:errno userInfo:details];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                failure(error);
+            });
+        }
+    });
+}
+
 - (void) readBitsFrom:(int)startAddress count:(int)count success:(void (^)(NSArray *array))success failure:(void (^)(NSError *error))failure {
     dispatch_async(modbusQueue, ^{
         

@@ -33,6 +33,8 @@ typedef enum {
 
 - (void) writeBit:(int)address to:(BOOL)status success:(void (^)())success failure:(void (^)(NSError *error))failure;
 - (void) writeRegister:(int)address to:(int)value success:(void (^)())success failure:(void (^)(NSError *error))failure;
+- (void) maskWriteRegister:(int)address andMask:(uint16_t)andMask orMask:(uint16_t)orMask success:(void (^)())success failure:(void (^)(NSError *error))failure;
+
 - (void) readBitsFrom:(int)startAddress count:(int)count success:(void (^)(NSArray *array))success failure:(void (^)(NSError *error))failure;
 - (void) readInputBitsFrom:(int)startAddress count:(int)count success:(void (^)(NSArray *array))success failure:(void (^)(NSError *error))failure;
 - (void) readRegistersFrom:(int)startAddress count:(int)count success:(void (^)(NSArray *array))success failure:(void (^)(NSError *error))failure;
